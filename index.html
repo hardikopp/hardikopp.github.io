@@ -16,11 +16,15 @@
         body {
             overflow: hidden;
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #000;
+            background-color: #0a0a12;
             color: white;
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(0, 119, 255, 0.15) 0%, transparent 25%),
-                radial-gradient(circle at 80% 70%, rgba(226, 0, 116, 0.15) 0%, transparent 25%);
+            animation: bgShift 15s ease infinite alternate;
+        }
+
+        @keyframes bgShift {
+            0% { background-color: #0a0a12; }
+            50% { background-color: #0f0f1a; }
+            100% { background-color: #05050a; }
         }
 
         #canvas-container {
@@ -44,7 +48,7 @@
             align-items: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 1.5s ease-in-out;
+            transition: opacity 1.2s ease-out;
             z-index: 2;
         }
 
@@ -62,8 +66,24 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            animation: gradientShift 8s ease infinite;
+            animation: 
+                gradientShift 8s ease infinite,
+                pulse 2s ease-in-out infinite;
             background-size: 300% 300%;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+            50% { text-shadow: 0 0 20px rgba(255,255,255,0.6); }
+        }
+
+        #portfolio.visible .name {
+            transform: translateY(0);
+            opacity: 1;
+            transition-delay: 0.3s;
         }
 
         .enter-btn {
@@ -74,17 +94,30 @@
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
             font-family: 'SF Pro Display', sans-serif;
             font-weight: 500;
             position: relative;
             overflow: hidden;
             z-index: 1;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            box-shadow: 0 10px 30px rgba(0, 119, 255, 0.3);
+        }
+
+        #portfolio.visible .enter-btn {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            transition-delay: 0.6s;
         }
 
         .enter-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 119, 255, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 119, 255, 0.4);
+        }
+
+        .enter-btn:active {
+            transform: translateY(1px) scale(0.98);
         }
 
         .enter-btn::before {
@@ -97,7 +130,7 @@
             background: linear-gradient(45deg, #00ffcc, #0077ff);
             z-index: -1;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.4s ease;
         }
 
         .enter-btn:hover::before {
@@ -105,15 +138,9 @@
         }
 
         @keyframes gradientShift {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         @media (max-width: 768px) {
@@ -131,42 +158,52 @@
 <body>
     <div id="canvas-container"></div>
     <div id="portfolio">
-        <h1 class="name">HARDIK KUMAR BIHARI</h1>
-        <button class="enter-btn" onclick="window.location.href='portfolio.html'">ENTER PORTFOLIO</button>
+        <h1 class="name"></h1>
+        <button class="enter-btn">ENTER PORTFOLIO</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Particle Animation
+        // Enhanced Particle Animation
         const canvasContainer = document.getElementById('canvas-container');
         const portfolioSection = document.getElementById('portfolio');
+        const nameElement = document.querySelector('.name');
+        const enterBtn = document.querySelector('.enter-btn');
 
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true, 
+            alpha: true
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
         canvasContainer.appendChild(renderer.domElement);
 
         // Particles
-        const particleCount = 3000;
+        const particleCount = 2500;
         const particles = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const sizes = new Float32Array(particleCount);
 
-        // Initialize particles in random positions with blue/purple color scheme
+        // Initialize particles in a sphere
         for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 2000;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
+            // Sphere distribution
+            const radius = 300;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            
+            positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            positions[i * 3 + 2] = radius * Math.cos(phi);
 
-            // Blue/purple color scheme
-            colors[i * 3] = Math.random() * 0.2 + 0.1; // R
-            colors[i * 3 + 1] = Math.random() * 0.3; // G
-            colors[i * 3 + 2] = Math.random() * 0.5 + 0.5; // B
+            // Blue/purple colors
+            colors[i * 3] = 0.1 + Math.random() * 0.3;
+            colors[i * 3 + 1] = 0.1 + Math.random() * 0.2;
+            colors[i * 3 + 2] = 0.5 + Math.random() * 0.5;
 
-            sizes[i] = Math.random() * 3 + 1;
+            sizes[i] = 1.5 + Math.random() * 2;
         }
 
         particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -179,38 +216,37 @@
             vertexColors: true,
             transparent: true,
             opacity: 0.8,
-            blending: THREE.AdditiveBlending
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true
         });
 
         const particleSystem = new THREE.Points(particles, particleMaterial);
         scene.add(particleSystem);
 
         // Camera position
-        camera.position.z = 500;
+        camera.position.z = 600;
 
-        // Animation state
-        let animationState = 'scatter'; // scatter, forming, formed, fading
+        // Animation variables
+        let animationPhase = 0; // 0 = forming name, 1 = showing UI
         let animationStartTime = Date.now();
-        const formDuration = 4000; // 4 seconds to form name
-        const displayDuration = 3000; // 3 seconds displaying name
-        const fadeDuration = 2000; // 2 seconds fading out
+        const formDuration = 3500; // 3.5 seconds to form name
+        const showDuration = 2000; // 2 seconds before showing UI
 
-        // Name positions (simplified for demo - would need proper 3D modeling for accurate representation)
+        // Name positions
         const namePositions = [];
-        const name = "HARDIK KUMAR BIHARI";
-        const nameSegments = 20; // segments per letter (simplified)
+        const nameText = "HARDIK KUMAR BIHARI";
+        const letters = 40; // Particles per letter
 
-        // Generate target positions for the name (simplified)
-        for (let i = 0; i < name.length; i++) {
-            for (let j = 0; j < nameSegments; j++) {
-                const x = (i - name.length / 2) * 30;
-                const y = 0;
-                const z = 0;
-                namePositions.push(x, y, z);
+        // Create target positions for name
+        for (let i = 0; i < nameText.length; i++) {
+            for (let j = 0; j < letters; j++) {
+                const x = (i - nameText.length / 2) * 30;
+                const y = Math.sin(j/letters * Math.PI) * 20 - 10;
+                namePositions.push(x, y, 0);
             }
         }
 
-        // Make sure we have enough positions
+        // Fill remaining positions randomly around center
         while (namePositions.length < particleCount * 3) {
             namePositions.push(
                 (Math.random() - 0.5) * 100,
@@ -219,71 +255,117 @@
             );
         }
 
+        // Store original positions
+        particles.attributes.position.original = [...positions];
+
+        // Typewriter effect
+        function typeWriter() {
+            let i = 0;
+            nameElement.textContent = '';
+            
+            function type() {
+                if (i < nameText.length) {
+                    nameElement.textContent += nameText.charAt(i);
+                    i++;
+                    setTimeout(type, 80); // Typing speed
+                }
+            }
+            type();
+        }
+
+        // Button wave effect
+        function setupButtonWave() {
+            enterBtn.innerHTML = '<span>' + enterBtn.textContent.split('').map((char, i) => 
+                `<span style="display:inline-block;transition:transform 0.3s ease ${i*0.05}s">${char}</span>`
+            ).join('') + '</span>';
+            
+            enterBtn.addEventListener('mouseover', function() {
+                const spans = this.querySelectorAll('span span');
+                spans.forEach((span, i) => {
+                    setTimeout(() => {
+                        span.style.transform = 'translateY(-5px)';
+                        setTimeout(() => span.style.transform = '', 300);
+                    }, i * 50);
+                });
+            });
+        }
+
+        // Particle burst on click
+        function setupParticleBurst() {
+            enterBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Create burst effect
+                const positions = particles.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i] += (Math.random() - 0.5) * 50;
+                    positions[i+1] += (Math.random() - 0.5) * 50;
+                    positions[i+2] += (Math.random() - 0.5) * 50;
+                }
+                particles.attributes.position.needsUpdate = true;
+                
+                // Navigate after animation
+                setTimeout(() => window.location.href='portfolio.html', 500);
+            });
+        }
+
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
 
-            const currentTime = Date.now();
-            const elapsed = currentTime - animationStartTime;
+            const now = Date.now();
+            const elapsed = now - animationStartTime;
 
-            // Rotate particles in scatter state
-            if (animationState === 'scatter') {
-                particleSystem.rotation.x += 0.001;
-                particleSystem.rotation.y += 0.002;
-
-                // Switch to forming after 3 seconds
-                if (elapsed > 3000) {
-                    animationState = 'forming';
-                    animationStartTime = currentTime;
-                }
-            } 
-            // Form the name
-            else if (animationState === 'forming') {
+            if (animationPhase === 0) {
+                // Phase 0: Particles forming name
                 const progress = Math.min(elapsed / formDuration, 1);
-                
-                // Move particles to name positions
-                const positions = particles.attributes.position.array;
-                const originalPositions = particles.attributes.position.originalPositions || 
-                                        [...particles.attributes.position.array];
-                
-                // Store original positions if not already stored
-                if (!particles.attributes.position.originalPositions) {
-                    particles.attributes.position.originalPositions = originalPositions;
+                const easeProgress = Math.pow(progress, 0.7);
+
+                // Move particles
+                const posArray = particles.attributes.position.array;
+                for (let i = 0; i < posArray.length; i++) {
+                    const start = particles.attributes.position.original[i];
+                    const end = namePositions[i] || 0;
+                    posArray[i] = start + (end - start) * easeProgress;
                 }
-                
-                for (let i = 0; i < positions.length; i++) {
-                    const originalPos = originalPositions[i];
-                    const targetPos = namePositions[i] || 0;
-                    positions[i] = originalPos + (targetPos - originalPos) * progress;
-                }
-                
                 particles.attributes.position.needsUpdate = true;
-                
-                // Switch to formed state when complete
+
+                // Move camera
+                camera.position.z = 600 + (400 - 600) * easeProgress;
+
+                // Gentle rotation
+                particleSystem.rotation.y = Math.sin(now * 0.0007) * 0.3;
+                particleSystem.rotation.x = Math.cos(now * 0.0005) * 0.2;
+
                 if (progress >= 1) {
-                    animationState = 'formed';
-                    animationStartTime = currentTime;
+                    animationPhase = 1;
+                    animationStartTime = now;
+                    typeWriter(); // Start typing effect
                 }
             } 
-            // Display the formed name
-            else if (animationState === 'formed') {
-                if (elapsed > displayDuration) {
-                    animationState = 'fading';
-                    animationStartTime = currentTime;
-                }
-            } 
-            // Fade out the name
-            else if (animationState === 'fading') {
-                const progress = Math.min(elapsed / fadeDuration, 1);
-                particleMaterial.opacity = 1 - progress;
-                
-                // Show portfolio section when fade is complete
-                if (progress >= 1) {
+            else if (animationPhase === 1) {
+                // Phase 1: Showing UI
+                if (elapsed > showDuration) {
                     portfolioSection.classList.add('visible');
-                    // Stop animation to save resources
-                    return;
+                    animationPhase = 2;
+                    setupButtonWave();
+                    setupParticleBurst();
                 }
             }
+
+            // Floating particle movement
+            const time = now * 0.001;
+            const posArray = particles.attributes.position.array;
+            for (let i = 0; i < posArray.length; i += 3) {
+                posArray[i] += Math.sin(time + i) * 0.1;
+                posArray[i+1] += Math.cos(time + i*0.5) * 0.1;
+            }
+            particles.attributes.position.needsUpdate = true;
+
+            // Camera movement
+            camera.position.x = Math.sin(time * 0.3) * 20;
+            camera.position.y = Math.cos(time * 0.2) * 15;
+            camera.lookAt(0, 0, 0);
 
             renderer.render(scene, camera);
         }
